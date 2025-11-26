@@ -26,9 +26,9 @@ Execute the C Program for the desired output.
 
 ## Write a C program that illustrates two processes communicating using shared memory.
 
-```
+```c
 
-//sem.c
+// sem.c
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -51,84 +51,90 @@ int main() {
 
     // Create shared memory
     shmid = shmget((key_t)1234, sizeof(struct shared_use_st), 0666 | IPC_CREAT);
- if (shmid == -1) {
-        fprintf(stderr, "shmget failed\n");
+    if (shmid == -1) {
+        perror("shmget failed");
         exit(EXIT_FAILURE);
     }
-    
-    // Print the shared memory ID in a predictable format
-    printf("Shared memory id = %d\n", shmid);
-    
-    // Attach to shared memory
-    shared_memory = shmat(shmid, (void *)0, 0);
+
+    printf("Shared memory ID = %d\n", shmid);
+
+    // Attach shared memory
+    shared_memory = shmat(shmid, NULL, 0);
     if (shared_memory == (void *)-1) {
-        fprintf(stderr, "shmat failed\n");
+        perror("shmat failed");
         exit(EXIT_FAILURE);
     }
+
     printf("Memory attached at %p\n", shared_memory);
-    
+
     shared_stuff = (struct shared_use_st *)shared_memory;
     shared_stuff->written = 0;
 
     pid_t pid = fork();
-    
+
     if (pid < 0) {
-        fprintf(stderr, "Fork failed\n");
+        perror("fork failed");
         exit(EXIT_FAILURE);
     }
 
-    if (pid == 0) {  // Child process (Consumer)
+    /* ---------------------- CHILD : CONSUMER ---------------------- */
+    if (pid == 0) {
         while (1) {
             while (shared_stuff->written == 0) {
-                sleep(1); // Wait for producer
+                sleep(1); // wait for producer
             }
 
             printf("Consumer received: %s", shared_stuff->some_text);
 
             if (strncmp(shared_stuff->some_text, "end", 3) == 0) {
+                shared_stuff->written = 0;
                 break;
             }
 
-            shared_stuff->written = 0; // Reset for producer
+            shared_stuff->written = 0;  // mark as read
         }
 
-        // Detach shared memory
+        // detach
         if (shmdt(shared_memory) == -1) {
-            fprintf(stderr, "shmdt failed\n");
+            perror("shmdt failed");
             exit(EXIT_FAILURE);
         }
+
         exit(EXIT_SUCCESS);
-    } else {  // Parent process (Producer)
+    }
+
+    /* ---------------------- PARENT : PRODUCER ---------------------- */
+    else {
         char buffer[TEXT_SZ];
 
         while (1) {
-            printf("Enter Some Text: ");
+            printf("Enter some text: ");
             fgets(buffer, TEXT_SZ, stdin);
 
             strncpy(shared_stuff->some_text, buffer, TEXT_SZ);
             shared_stuff->written = 1;
-            printf(shared_stuff->some_text);
+
+            printf("Producer sent: %s", buffer);
 
             if (strncmp(buffer, "end", 3) == 0) {
                 break;
             }
 
             while (shared_stuff->written == 1) {
-                sleep(1); // Wait for consumer
+                sleep(1); // wait for consumer
             }
         }
 
-        // Wait for child process (consumer) to finish
-        wait(NULL);
+        wait(NULL); // wait for child
 
-        // Detach and remove shared memory
+        // detach and remove shared memory
         if (shmdt(shared_memory) == -1) {
-            fprintf(stderr, "shmdt failed\n");
+            perror("shmdt failed");
             exit(EXIT_FAILURE);
         }
-        
-        if (shmctl(shmid, IPC_RMID, 0) == -1) {
-            fprintf(stderr, "shmctl failed\n");
+
+        if (shmctl(shmid, IPC_RMID, NULL) == -1) {
+            perror("shmctl failed");
             exit(EXIT_FAILURE);
         }
 
@@ -143,12 +149,11 @@ int main() {
 ## OUTPUT
 
 
-![Alt text](EXP06PIC1.png)
+![Alt text](SEMC.png)
 
 
 
-
-![Alt text](EXP06PIC2.png)
+![Alt text](IPCS.png)
 
 
 
