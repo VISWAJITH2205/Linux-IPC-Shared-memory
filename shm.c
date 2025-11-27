@@ -1,4 +1,4 @@
-// sem.c
+// shm.c
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -10,7 +10,7 @@
 #define TEXT_SZ 2048  // Shared memory size
 
 struct shared_use_st {
-    int written;  
+    int written;
     char some_text[TEXT_SZ];
 };
 
@@ -40,7 +40,7 @@ int main() {
     shared_stuff = (struct shared_use_st *)shared_memory;
     shared_stuff->written = 0;
 
-    pid_t pid = fork();
+    pid_t pid = fork();   // <-- You MUST keep this inside main()
 
     if (pid < 0) {
         perror("fork failed");
@@ -111,4 +111,3 @@ int main() {
         exit(EXIT_SUCCESS);
     }
 }
-

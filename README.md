@@ -28,7 +28,7 @@ Execute the C Program for the desired output.
 
 ```c
 
-// sem.c
+// shm.c
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -40,7 +40,7 @@ Execute the C Program for the desired output.
 #define TEXT_SZ 2048  // Shared memory size
 
 struct shared_use_st {
-    int written;  
+    int written;
     char some_text[TEXT_SZ];
 };
 
@@ -70,7 +70,7 @@ int main() {
     shared_stuff = (struct shared_use_st *)shared_memory;
     shared_stuff->written = 0;
 
-    pid_t pid = fork();
+    pid_t pid = fork();   // <-- You MUST keep this inside main()
 
     if (pid < 0) {
         perror("fork failed");
@@ -149,11 +149,12 @@ int main() {
 ## OUTPUT
 
 
-![Alt text](SEMC.png)
+![Alt text](SHMC.png)
 
 
 
-![Alt text](IPCS.png)
+![Alt text](ipcs.png)
+
 
 
 
